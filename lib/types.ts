@@ -49,6 +49,15 @@ export interface SerializedTag {
   userId: string;
 }
 
+export interface SerializedTaskWithRelations extends SerializedTask {
+  subtasks: SerializedSubtask[];
+  tags: SerializedTag[];
+  list?: Pick<SerializedTaskList, "id" | "name" | "color" | "icon">;
+}
+
+export type WorkspaceScope = "all" | "today" | "upcoming" | "completed" | `list:${string}`;
+export type WorkspaceView = "list" | "board" | "calendar";
+
 export type ActionResponse<T = unknown> = 
   | { ok: true; data: T }
   | { ok: false; error: string };

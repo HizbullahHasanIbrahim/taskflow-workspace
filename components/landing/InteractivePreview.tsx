@@ -7,15 +7,25 @@ import { Check, Plus, LayoutList, LayoutGrid, Calendar, Tag } from "lucide-react
 export function InteractivePreview() {
   const [activeView, setActiveView] = useState<"list" | "board">("list");
   const [tasks, setTasks] = useState([
-    { id: 1, title: "Rancang Sistem Desain Glass", priority: "high", done: false, tag: "design" },
-    { id: 2, title: "Implementasi Secure JWT Cookie", priority: "urgent", done: false, tag: "backend" },
-    { id: 3, title: "Review PRD TaskFlow Workspace", priority: "med", done: true, tag: "docs" },
-  ]);
+    { id: 1, title: "Rancang Sistem Desain Glass", priority: "high", done: false, tag: "design", status: "IN_PROGRESS" },
+    { id: 2, title: "Implementasi Secure JWT Cookie", priority: "urgent", done: false, tag: "backend", status: "TODO" },
+    { id: 3, title: "Review PRD TaskFlow Workspace", priority: "med", done: true, tag: "docs", status: "DONE" },
+  ] as { id: number; title: string; priority: string; done: boolean; tag: string; status: "TODO" | "IN_PROGRESS" | "DONE" }[]);
   const [quickText, setQuickText] = useState("");
 
   const handleToggle = (id: number) => {
     setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
+      prev.map((t) => {
+        if (t.id === id) {
+          const nextDone = !t.done;
+          return {
+            ...t,
+            done: nextDone,
+            status: nextDone ? "DONE" : t.status === "DONE" ? "TODO" : t.status,
+          };
+        }
+        return t;
+      })
     );
   };
 
@@ -30,6 +40,7 @@ export function InteractivePreview() {
         priority: "med",
         done: false,
         tag: "inbox",
+        status: "TODO",
       },
     ]);
     setQuickText("");
@@ -174,7 +185,7 @@ export function InteractivePreview() {
                 className="grid grid-cols-3 gap-2.5"
               >
                 {(["TODO", "IN_PROGRESS", "DONE"] as const).map((col) => {
-                  const colTasks = col === "DONE" ? tasks.filter((t) => t.done) : tasks.filter((t) => !t.done);
+                  const colTasks = tasks.filter((t) => t.status === col);
                   return (
                     <div key={col} className="p-2.5 rounded-xl bg-[var(--surface-subtle)] border border-[var(--border-hairline)]">
                       <div className="flex items-center justify-between mb-2.5 px-0.5">
