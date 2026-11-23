@@ -10,7 +10,7 @@ import {
   toggleTaskCompleteSchema,
   moveTaskSchema,
 } from "../validations";
-import { ActionResponse, SerializedTaskWithRelations } from "../types";
+import { ActionResponse, SerializedTaskWithRelations, MoveTaskResult } from "../types";
 import { calculateNextPosition, getAppendPosition } from "../position";
 import { TaskStatus, TaskPriority } from "@prisma/client";
 
@@ -244,7 +244,7 @@ export async function moveTaskAction(input: {
   targetListId?: string;
   prevTaskId?: string | null;
   nextTaskId?: string | null;
-}): Promise<ActionResponse<{ success: boolean }>> {
+}): Promise<ActionResponse<MoveTaskResult>> {
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: "Sesi berakhir." };
 
@@ -276,6 +276,7 @@ export async function moveTaskAction(input: {
       if (nextTask) nextPos = nextTask.position;
     }
 
+    // Perhitungan posisi Float Gap O(1) berdasarkan prev dan next
     const { position, needsRebalance } = calculateNextPosition(prevPos, nextPos);
 
     let completedAt = task.completedAt;
@@ -285,7 +286,7 @@ export async function moveTaskAction(input: {
       completedAt = null;
     }
 
-    await prisma.$transaction(async (tx) => {
+    const rebalancedItems = await prisma.$transaction(async (tx) => {
       await tx.task.update({
         where: { id: taskId },
         data: {
@@ -296,24 +297,44 @@ export async function moveTaskAction(input: {
         },
       });
 
-      // Jika perlu rebalance, susun ulang seluruh posisi di list & status tersebut
+      // Jika selisih posisi antar tugas terlalu rapat (< 0.001), lakukan auto-rebalance terurut
       if (needsRebalance) {
         const siblings = await tx.task.findMany({
           where: { userId: user.id, listId, status },
           orderBy: { position: "asc" },
         });
 
+        const items: { id: string; position: number }[] = [];
         for (let i = 0; i < siblings.length; i++) {
+          const newPos = (i + 1) * 1024;
           await tx.task.update({
             where: { id: siblings[i].id },
-            data: { position: (i + 1) * 1024 },
+            data: { position: newPos },
           });
+          items.push({ id: siblings[i].id, position: newPos });
         }
+        return items;
       }
+
+      return undefined;
     });
 
+    const finalPosition = rebalancedItems
+      ? (rebalancedItems.find((r) => r.id === taskId)?.position ?? position)
+      : position;
+
     revalidatePath("/app");
-    return { ok: true, data: { success: true } };
+    return {
+      ok: true,
+      data: {
+        taskId,
+        status,
+        listId,
+        position: finalPosition,
+        completedAt: completedAt ? completedAt.toISOString() : null,
+        rebalanced: rebalancedItems,
+      },
+    };
   } catch (error) {
     console.error("Move Task Error:", error);
     return { ok: false, error: "Gagal memindahkan tugas." };

@@ -103,6 +103,7 @@ export function SmartQuickAdd({ onCreateTask, serverNow }: SmartQuickAddProps) {
         <div className="flex items-center rounded-2xl border border-[var(--border-hairline)] bg-[var(--surface-subtle)] px-4 py-2.5 shadow-sm focus-within:ring-2 focus-within:ring-[var(--accent-primary)]">
           <Plus className="mr-3 h-4 w-4 shrink-0 text-[var(--text-tertiary)]" />
           <input
+            id="smart-quick-add-input"
             ref={inputRef}
             type="text"
             value={quickText}

@@ -58,6 +58,18 @@ export interface SerializedTaskWithRelations extends SerializedTask {
 export type WorkspaceScope = "all" | "today" | "upcoming" | "completed" | `list:${string}`;
 export type WorkspaceView = "list" | "board" | "calendar";
 
+export type SortOption = "manual" | "dueDate" | "priority" | "newest";
+export type PriorityFilterOption = "ALL" | TaskPriority;
+
+export interface MoveTaskResult {
+  taskId: string;
+  status: TaskStatus;
+  listId: string;
+  position: number;
+  completedAt: string | null;
+  rebalanced?: { id: string; position: number }[];
+}
+
 export type ActionResponse<T = unknown> = 
   | { ok: true; data: T }
   | { ok: false; error: string };
