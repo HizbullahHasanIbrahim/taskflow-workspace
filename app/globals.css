@@ -1,26 +1,171 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-space), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Canvas & Ambient Surfaces */
+  --bg-canvas: #f3f5f9;
+  --bg-ambient-1: rgba(0, 122, 255, 0.08);
+  --bg-ambient-2: rgba(94, 92, 230, 0.07);
+
+  /* Surface & Fluid Glass Layers */
+  --surface-solid: #ffffff;
+  --surface-subtle: #f8fafc;
+  --glass-sidebar: rgba(248, 250, 252, 0.72);
+  --glass-header: rgba(255, 255, 255, 0.76);
+  --glass-elevated: rgba(255, 255, 255, 0.86);
+  --glass-hover: rgba(15, 23, 42, 0.05);
+  --glass-active-pill: rgba(255, 255, 255, 0.96);
+
+  /* Borders & Specular Highlights */
+  --border-hairline: rgba(15, 23, 42, 0.08);
+  --border-strong: rgba(15, 23, 42, 0.14);
+  --glass-specular: rgba(255, 255, 255, 0.92);
+
+  /* Typography */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #64748b;
+
+  /* Brand Accent */
+  --accent-primary: #007aff;
+  --accent-hover: #0066d6;
+  --accent-soft: rgba(0, 122, 255, 0.12);
+  --accent-border: rgba(0, 122, 255, 0.28);
+
+  /* Priority Badges */
+  --prio-urgent-bg: rgba(239, 68, 68, 0.12);
+  --prio-urgent-text: #b91c1c;
+  --prio-urgent-border: rgba(220, 38, 38, 0.26);
+
+  --prio-high-bg: rgba(249, 115, 22, 0.13);
+  --prio-high-text: #c2410c;
+  --prio-high-border: rgba(234, 88, 12, 0.28);
+
+  --prio-medium-bg: rgba(217, 119, 6, 0.14);
+  --prio-medium-text: #92400e;
+  --prio-medium-border: rgba(180, 83, 9, 0.30);
+
+  --prio-low-bg: rgba(100, 116, 139, 0.12);
+  --prio-low-text: #334155;
+  --prio-low-border: rgba(100, 116, 139, 0.24);
+
+  /* Status Tokens */
+  --status-todo: #64748b;
+  --status-progress: #007aff;
+  --status-review: #7c3aed;
+  --status-done: #15803d;
+
+  /* Shadows */
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.03);
+  --shadow-glass: 0 16px 40px rgba(15, 23, 42, 0.09), 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Canvas & Ambient Surfaces */
+  --bg-canvas: #090d16;
+  --bg-ambient-1: rgba(10, 132, 255, 0.12);
+  --bg-ambient-2: rgba(94, 92, 230, 0.10);
+
+  /* Surface & Fluid Glass Layers */
+  --surface-solid: #111827;
+  --surface-subtle: rgba(255, 255, 255, 0.035);
+  --glass-sidebar: rgba(14, 19, 31, 0.72);
+  --glass-header: rgba(14, 19, 31, 0.74);
+  --glass-elevated: rgba(20, 27, 45, 0.84);
+  --glass-hover: rgba(255, 255, 255, 0.07);
+  --glass-active-pill: rgba(255, 255, 255, 0.14);
+
+  /* Borders & Specular Highlights */
+  --border-hairline: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --glass-specular: rgba(255, 255, 255, 0.22);
+
+  /* Typography */
+  --text-primary: #f5f7fa;
+  --text-secondary: #9aa7bc;
+  --text-tertiary: #64748b;
+
+  /* Brand Accent */
+  --accent-primary: #0a84ff;
+  --accent-hover: #3399ff;
+  --accent-soft: rgba(10, 132, 255, 0.18);
+  --accent-border: rgba(10, 132, 255, 0.36);
+
+  /* Priority Badges */
+  --prio-urgent-bg: rgba(239, 68, 68, 0.18);
+  --prio-urgent-text: #fca5a5;
+  --prio-urgent-border: rgba(248, 113, 113, 0.34);
+
+  --prio-high-bg: rgba(249, 115, 22, 0.18);
+  --prio-high-text: #fdba74;
+  --prio-high-border: rgba(251, 146, 60, 0.34);
+
+  --prio-medium-bg: rgba(245, 158, 11, 0.18);
+  --prio-medium-text: #fcd34d;
+  --prio-medium-border: rgba(251, 191, 36, 0.34);
+
+  --prio-low-bg: rgba(148, 163, 184, 0.14);
+  --prio-low-text: #cbd5e1;
+  --prio-low-border: rgba(148, 163, 184, 0.26);
+
+  /* Status Tokens */
+  --status-todo: #94a3b8;
+  --status-progress: #38bdf8;
+  --status-review: #c084fc;
+  --status-done: #4ade80;
+
+  /* Shadows */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.28), 0 6px 16px rgba(0, 0, 0, 0.22);
+  --shadow-glass: 0 22px 54px rgba(0, 0, 0, 0.48), 0 4px 12px rgba(0, 0, 0, 0.28);
+}
+
+@layer base {
+  body {
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.fluid-glass {
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  border: 1px solid var(--border-hairline);
+  box-shadow: inset 0 1px 0 0 var(--glass-specular), var(--shadow-glass);
+}
+
+.fluid-glass-elevated {
+  background: var(--glass-elevated);
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  border: 1px solid var(--border-strong);
+  box-shadow: inset 0 1px 0 0 var(--glass-specular), var(--shadow-glass);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .fluid-glass, .fluid-glass-elevated {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background-color: var(--surface-solid);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

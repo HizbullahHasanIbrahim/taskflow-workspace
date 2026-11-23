@@ -18,6 +18,11 @@
 
 ---
 
+### 1.1 Motion & Scroll Strategy
+- **`motion` (`motion/react`):** Mesin animasi utama untuk `/` dan `/app` (transisi *spring*, `layoutId` pada segmented switcher/navigasi, `AnimatePresence` untuk drawer/modal/toast). Bungkus root aplikasi dengan `<MotionConfig reducedMotion="user">`.
+- **Aturan Anti-Konflik DnD:** DILARANG memasang prop `layout` dari `motion` pada elemen DOM yang sama dengan `useSortable` dari `@dnd-kit`.
+- **`lenis`:** Hanya boleh dipasang pada **Landing Page (`/`)** melalui komponen khusus `components/landing/SmoothScroll.tsx`. **Dilarang keras** memasang Lenis di `/app`, `/login`, atau `/register`. Wajib membersihkan instance (`cancelAnimationFrame` + `lenis.destroy()`) pada cleanup `useEffect` dan menonaktifkan Lenis otomatis jika `prefers-reduced-motion: reduce` aktif.
+
 ## 2. Sistem Design Tokens (Tailwind CSS v4 Ready)
 
 Seluruh token ditempatkan di `app/globals.css` dengan sintaks Tailwind CSS v4 (`@import "tailwindcss";`). Tema dikendalikan melalui atribut `data-theme="light" | "dark"` pada elemen `<html>` disertai sinkronisasi `color-scheme` agar scrollbar dan input bawaan browser selalu serasi.
