@@ -20,9 +20,11 @@ export async function registerAction(formData: FormData): Promise<ActionResponse
   }
 
   const { name, email, password } = validated.data;
+  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedName = name.trim();
 
   try {
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (existingUser) return { ok: false, error: "Email sudah terdaftar." };
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -30,7 +32,8 @@ export async function registerAction(formData: FormData): Promise<ActionResponse
     // Jalankan User creation + Auto-seed dalam satu transaksi
     const user = await prisma.$transaction(async (tx) => {
       const newUser = await tx.user.create({
-        data: { name, email, passwordHash },
+        data: { name: normalizedName, email: normalizedEmail, passwordHash },
+        select: { id: true, name: true, email: true },
       });
 
       // 1. Seed TaskLists
@@ -142,9 +145,13 @@ export async function loginAction(formData: FormData): Promise<ActionResponse> {
   }
 
   const { email, password } = validated.data;
+  const normalizedEmail = email.trim().toLowerCase();
 
   try {
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      select: { id: true, name: true, email: true, passwordHash: true },
+    });
     if (!user) return { ok: false, error: "Email atau password salah." };
 
     const isValid = await bcrypt.compare(password, user.passwordHash);

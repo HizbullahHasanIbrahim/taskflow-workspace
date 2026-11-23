@@ -113,7 +113,7 @@ export function TaskDetailDrawer({
       className="fixed inset-0 z-50 flex items-end justify-center md:inset-y-0 md:left-auto md:right-0 md:items-center md:p-4"
     >
       <button type="button" onClick={onClose} aria-label="Tutup detail" className="absolute inset-0 bg-black/30 backdrop-blur-xs md:rounded-3xl" />
-      <div className="fluid-glass-elevated relative flex max-h-[86dvh] w-full flex-col overflow-hidden rounded-t-3xl md:max-h-[90dvh] md:w-[420px] md:rounded-2xl">
+      <div className="fluid-glass-elevated relative flex max-h-[86dvh] w-full flex-col overflow-hidden rounded-t-3xl md:max-h-[90dvh] md:w-[420px] md:rounded-2xl pb-[max(16px,env(safe-area-inset-bottom))] md:pb-0">
         <div className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-[var(--border-strong)] md:hidden" />
         <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--border-hairline)] p-4">
           <div className="flex items-center gap-2">

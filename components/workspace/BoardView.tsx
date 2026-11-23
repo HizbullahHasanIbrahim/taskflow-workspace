@@ -23,7 +23,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { TaskStatus, TaskPriority } from "@prisma/client";
-import { Check, Plus, Calendar, Tag as TagIcon, CheckCircle2 } from "lucide-react";
+import { Check, Plus, Calendar, Tag as TagIcon, CheckCircle2, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SerializedTaskWithRelations, SortOption } from "@/lib/types";
 
@@ -522,9 +522,10 @@ export function BoardView({
     <div className="flex-1 flex flex-col overflow-hidden px-4 sm:px-8 py-4">
       {/* Banner peringatan jika drag nonaktif karena mode sort selain Manual */}
       {isDragDisabled && (
-        <div className="mb-3 px-3 py-1.5 rounded-xl border border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300 text-xs flex items-center justify-between">
+        <div className="mb-3 px-3 py-1.5 rounded-xl border border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300 text-xs flex items-center gap-2">
+          <Info className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
           <span>
-            ℹ️ Pengurutan kartu via drag-and-drop hanya aktif pada mode sortir <strong>Manual (Drag)</strong>.
+            Pengurutan kartu via drag-and-drop hanya aktif pada mode sortir <strong>Manual (Drag)</strong>.
           </span>
         </div>
       )}

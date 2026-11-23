@@ -3,6 +3,10 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "./prisma";
 
+if (process.env.NODE_ENV === "production" && !process.env.AUTH_SECRET) {
+  throw new Error("AUTH_SECRET environment variable wajib dikonfigurasi di production.");
+}
+
 const secret = new TextEncoder().encode(process.env.AUTH_SECRET || "default_secret_key_change_me");
 
 export interface JWTPayload {

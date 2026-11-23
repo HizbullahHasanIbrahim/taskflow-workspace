@@ -84,6 +84,8 @@ export function Sidebar({
   const toast = useToast();
   const [isListModalOpen, setIsListModalOpen] = useState(false);
   const [editingList, setEditingList] = useState<SerializedTaskList | null>(null);
+  const [deletingList, setDeletingList] = useState<SerializedTaskList | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [listName, setListName] = useState("");
   const [listColor, setListColor] = useState(APPLE_COLORS[0]);
   const [listIcon, setListIcon] = useState("folder");
@@ -113,22 +115,32 @@ export function Sidebar({
     setIsListModalOpen(true);
   };
 
-  const handleDeleteList = async (id: string, e: React.MouseEvent) => {
+  const handlePromptDelete = (list: SerializedTaskList, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm("Apakah Anda yakin ingin menghapus list ini? Seluruh tugas di dalamnya akan dihapus.")) return;
+    setDeletingList(list);
+  };
 
-    const formData = new FormData();
-    formData.append("id", id);
-    const res = await deleteListAction(formData);
+  const handleConfirmDelete = async () => {
+    if (!deletingList || isDeleting) return;
 
-    if (res.ok) {
-      toast.success("List berhasil dihapus.");
-      onListDeleted?.(id);
-      if (activeScope === `list:${id}`) {
-        onSelectScope("all");
+    setIsDeleting(true);
+    try {
+      const formData = new FormData();
+      formData.append("id", deletingList.id);
+      const res = await deleteListAction(formData);
+
+      if (res.ok) {
+        toast.success("List berhasil dihapus.");
+        onListDeleted?.(deletingList.id);
+        if (activeScope === `list:${deletingList.id}`) {
+          onSelectScope("all");
+        }
+        setDeletingList(null);
+      } else {
+        toast.error(res.error);
       }
-    } else {
-      toast.error(res.error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -302,7 +314,7 @@ export function Sidebar({
                       {lists.length > 1 && (
                         <button
                           type="button"
-                          onClick={(e) => handleDeleteList(list.id, e)}
+                          onClick={(e) => handlePromptDelete(list, e)}
                           className="p-1 rounded hover:bg-rose-500/10 text-[var(--text-tertiary)] hover:text-rose-500"
                           aria-label="Hapus list"
                         >
@@ -428,6 +440,39 @@ export function Sidebar({
           </div>
         </form>
       </Modal>
+
+      {/* Modal Konfirmasi Hapus List */}
+      {deletingList && (
+        <Modal
+          isOpen={Boolean(deletingList)}
+          onClose={() => setDeletingList(null)}
+          title="Hapus Daftar Tugas"
+        >
+          <div className="space-y-4">
+            <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+              Apakah Anda yakin ingin menghapus daftar <strong>&ldquo;{deletingList.name}&rdquo;</strong>? Seluruh tugas di dalamnya akan terhapus secara permanen.
+            </p>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[var(--border-hairline)]">
+              <button
+                type="button"
+                onClick={() => setDeletingList(null)}
+                className="px-3 py-1.5 text-xs text-[var(--text-tertiary)] hover:text-[var(--text-primary)] rounded-lg"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                className="px-4 py-1.5 bg-rose-500 hover:bg-rose-600 text-white text-xs font-semibold rounded-xl disabled:opacity-50 transition-all"
+              >
+                {isDeleting ? "Menghapus..." : "Hapus List"}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 
