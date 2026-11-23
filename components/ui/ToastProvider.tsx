@@ -54,14 +54,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     <ToastContext.Provider value={{ toast, success, error, info, removeToast }}>
       {children}
       <aside aria-label="Notifikasi" className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none items-center max-w-[90vw]">
-        <AnimatePresence>
+        <AnimatePresence mode="popLayout">
           {toasts.map((t) => (
             <motion.div
               key={t.id}
+              layout
               initial={{ opacity: 0, y: 16, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 12, scale: 0.95 }}
-              transition={{ duration: 0.25, ease: [0.34, 1.45, 0.64, 1] }}
+              transition={{ type: "spring", stiffness: 450, damping: 32 }}
               className="pointer-events-auto fluid-glass-elevated rounded-2xl px-4 py-3 flex items-center gap-3 text-sm font-medium shadow-2xl"
             >
               {t.type === "success" && <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />}

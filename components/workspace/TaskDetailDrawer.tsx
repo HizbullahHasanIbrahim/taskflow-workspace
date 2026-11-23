@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "motion/react";
+import { motion, useDragControls } from "motion/react";
 import { X, Trash2, Check, CalendarDays, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFocusTrap } from "@/lib/useFocusTrap";
@@ -57,6 +57,7 @@ export function TaskDetailDrawer({
   const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null);
   const [subtaskEditValue, setSubtaskEditValue] = useState("");
   const drawerRef = useFocusTrap<HTMLDivElement>(Boolean(task));
+  const dragControls = useDragControls();
 
   const saveTitle = () => {
     if (title.trim() && title !== task.title) {
@@ -109,15 +110,35 @@ export function TaskDetailDrawer({
       initial={{ opacity: 0, x: 24 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 24 }}
-      transition={{ type: "spring", stiffness: 380, damping: 34 }}
+      transition={{ type: "spring", damping: 32, stiffness: 340, mass: 0.9 }}
       role="dialog"
       aria-modal="true"
       aria-label="Detail tugas"
       className="fixed inset-0 z-50 flex items-end justify-center md:inset-y-0 md:left-auto md:right-0 md:items-center md:p-4"
     >
       <button type="button" onClick={onClose} aria-label="Tutup detail" className="absolute inset-0 bg-black/30 backdrop-blur-xs md:rounded-3xl" />
-      <div className="fluid-glass-elevated relative flex max-h-[86dvh] w-full flex-col overflow-hidden rounded-t-3xl md:max-h-[90dvh] md:w-[420px] md:rounded-2xl pb-[max(16px,env(safe-area-inset-bottom))] md:pb-0">
-        <div className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-[var(--border-strong)] md:hidden" />
+      <motion.div
+        drag="y"
+        dragControls={dragControls}
+        dragListener={false}
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={{ top: 0, bottom: 0.38 }}
+        onDragEnd={(_, info) => {
+          // Gestur drag-to-dismiss mobile: tutup drawer jika ditarik ke bawah melampaui 100px atau kecepatan swipe > 400px/s
+          if (info.offset.y > 100 || info.velocity.y > 400) {
+            onClose();
+          }
+        }}
+        className="fluid-glass-elevated relative flex max-h-[86dvh] w-full flex-col overflow-hidden rounded-t-3xl md:max-h-[90dvh] md:w-[420px] md:rounded-2xl pb-[max(16px,env(safe-area-inset-bottom))] md:pb-0"
+      >
+        {/* Handle drag khusus mobile: touch-none untuk memblokir scroll browser dan mengaktifkan dragControls */}
+        <div
+          onPointerDown={(e) => dragControls.start(e)}
+          className="touch-none cursor-grab active:cursor-grabbing flex items-center justify-center py-3 w-full shrink-0 min-h-[36px] md:hidden select-none"
+          aria-hidden="true"
+        >
+          <div className="h-1 w-10 rounded-full bg-[var(--border-strong)]" />
+        </div>
         <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--border-hairline)] p-4">
           <div className="flex items-center gap-2">
             <span className="font-sans text-xs font-medium text-[var(--text-secondary)]">
@@ -410,7 +431,7 @@ export function TaskDetailDrawer({
             Tutup
           </button>
         </footer>
-      </div>
+      </motion.div>
     </motion.aside>
   );
 }

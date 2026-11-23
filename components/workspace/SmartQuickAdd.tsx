@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { Plus, Tag as TagIcon, Calendar as CalendarIcon } from "lucide-react";
 import { parseQuickAdd, ParsedQuickAdd } from "@/lib/quickAddParser";
 import { useToast } from "@/components/ui/ToastProvider";
@@ -127,40 +128,54 @@ export function SmartQuickAdd({ onCreateTask, serverNow }: SmartQuickAddProps) {
               {preview.title}
             </span>
 
-            {/* Priority Chip */}
-            {preview.priority && (
-              <span
-                className={`inline-flex items-center gap-0.5 px-2 py-1 text-[9px] font-mono font-semibold uppercase tracking-wider border rounded-lg ${PRIORITY_COLORS[preview.priority]}`}
-              >
-                {preview.priority}
-              </span>
-            )}
+            <AnimatePresence>
+              {/* Priority Chip */}
+              {preview.priority && (
+                <motion.span
+                  key="nlp-priority"
+                  initial={{ scale: 0.82, opacity: 0, y: 4 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  exit={{ scale: 0.82, opacity: 0, y: -2 }}
+                  transition={{ type: "spring", stiffness: 520, damping: 28 }}
+                  className={`inline-flex items-center gap-0.5 px-2 py-1 text-[9px] font-mono font-semibold uppercase tracking-wider border rounded-lg ${PRIORITY_COLORS[preview.priority]}`}
+                >
+                  {preview.priority}
+                </motion.span>
+              )}
 
-            {/* Due Date Chip */}
-            {preview.dueDate && (
-              <span className="inline-flex items-center gap-0.5 px-2 py-1 text-[9px] font-mono border rounded-lg text-emerald-500 border-emerald-500/30 bg-emerald-500/10">
-                <CalendarIcon className="w-2.5 h-2.5" />
-                {preview.dueDate.toLocaleDateString("id-ID", {
-                  month: "short",
-                  day: "numeric",
-                })}
-              </span>
-            )}
+              {/* Due Date Chip */}
+              {preview.dueDate && (
+                <motion.span
+                  key="nlp-date"
+                  initial={{ scale: 0.82, opacity: 0, y: 4 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  exit={{ scale: 0.82, opacity: 0, y: -2 }}
+                  transition={{ type: "spring", stiffness: 520, damping: 28 }}
+                  className="inline-flex items-center gap-0.5 px-2 py-1 text-[9px] font-mono border rounded-lg text-emerald-500 border-emerald-500/30 bg-emerald-500/10"
+                >
+                  <CalendarIcon className="w-2.5 h-2.5" />
+                  {preview.dueDate.toLocaleDateString("id-ID", {
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </motion.span>
+              )}
 
-            {/* Tag Chips */}
-            {preview.tagNames.length > 0 && (
-              <div className="flex items-center gap-1">
-                {preview.tagNames.map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex items-center gap-0.5 px-2 py-1 text-[9px] font-mono text-purple-500 border border-purple-500/30 bg-purple-500/10 rounded-lg"
-                  >
-                    <TagIcon className="w-2.5 h-2.5" />
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            )}
+              {/* Tag Chips */}
+              {preview.tagNames.map((tag) => (
+                <motion.span
+                  key={`nlp-tag-${tag}`}
+                  initial={{ scale: 0.82, opacity: 0, y: 4 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  exit={{ scale: 0.82, opacity: 0, y: -2 }}
+                  transition={{ type: "spring", stiffness: 520, damping: 28 }}
+                  className="inline-flex items-center gap-0.5 px-2 py-1 text-[9px] font-mono text-purple-500 border border-purple-500/30 bg-purple-500/10 rounded-lg"
+                >
+                  <TagIcon className="w-2.5 h-2.5" />
+                  #{tag}
+                </motion.span>
+              ))}
+            </AnimatePresence>
           </div>
         )}
       </form>

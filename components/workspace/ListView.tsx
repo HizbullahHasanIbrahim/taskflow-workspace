@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   DndContext,
   DragOverlay,
@@ -20,7 +21,6 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
-  Check,
   Plus,
   Trash2,
   CheckCircle2,
@@ -28,11 +28,13 @@ import {
   Tag as TagIcon,
   Inbox,
   GripVertical,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SerializedTaskWithRelations, SortOption } from "@/lib/types";
 import { TaskStatus } from "@prisma/client";
 import { PriorityBadge } from "./PriorityBadge";
+import { TaskCheckbox, useDelayedCompletion } from "./TaskCheckbox";
 
 interface ListViewProps {
   tasks: SerializedTaskWithRelations[];
@@ -68,6 +70,7 @@ function SortableRow({
   task,
   serverNow,
   isDragDisabled,
+  isCompleting,
   onSelectTask,
   onToggleComplete,
   onDeleteTask,
@@ -75,8 +78,9 @@ function SortableRow({
   task: SerializedTaskWithRelations;
   serverNow: string;
   isDragDisabled: boolean;
+  isCompleting: boolean;
   onSelectTask: (id: string) => void;
-  onToggleComplete: (id: string) => void;
+  onToggleComplete: () => void;
   onDeleteTask: (id: string) => void;
 }) {
   const {
@@ -137,33 +141,36 @@ function SortableRow({
         </button>
       )}
 
-      {/* Checkbox (Stop Propagation) */}
-      <button
-        type="button"
+      {/* Checkbox dengan haptic spring & path draw */}
+      <TaskCheckbox
+        checked={task.status === "DONE"}
+        isCompleting={isCompleting}
         onClick={(e) => {
           e.stopPropagation();
-          onToggleComplete(task.id);
+          onToggleComplete();
         }}
-        aria-label={task.status === "DONE" ? "Tandai belum selesai" : "Selesaikan tugas"}
-        className={cn(
-          "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-all active:scale-90",
-          task.status === "DONE"
-            ? "border-emerald-500 bg-emerald-500 text-white"
-            : "border-[var(--border-strong)] hover:border-[var(--accent-primary)] hover:bg-[var(--accent-soft)]"
-        )}
-      >
-        {task.status === "DONE" && <Check className="h-3 w-3 stroke-[3]" />}
-      </button>
+        ariaLabel={task.status === "DONE" ? "Tandai belum selesai" : "Selesaikan tugas"}
+        size="md"
+      />
 
-      {/* Title & Desc */}
+      {/* Title & Desc dengan garis coret animasi saat completing */}
       <div className="min-w-0 flex-1">
         <div
           className={cn(
-            "font-sans text-xs font-medium truncate",
-            task.status === "DONE" && "line-through text-[var(--text-tertiary)]"
+            "font-sans text-xs font-medium relative inline-flex items-center max-w-full",
+            task.status === "DONE" && "line-through text-[var(--text-tertiary)]",
+            isCompleting && "opacity-60 text-[var(--text-tertiary)] transition-opacity"
           )}
         >
-          {task.title}
+          <span className="truncate">{task.title}</span>
+          {isCompleting && (
+            <motion.span
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute left-0 top-1/2 -translate-y-1/2 h-[1.5px] w-full bg-[var(--text-tertiary)] origin-left pointer-events-none"
+            />
+          )}
         </div>
       </div>
 
@@ -253,6 +260,9 @@ export function ListView({
   const [inlineTitle, setInlineTitle] = useState("");
   const [isSubmittingInline, setIsSubmittingInline] = useState(false);
   const [activeTask, setActiveTask] = useState<SerializedTaskWithRelations | null>(null);
+
+  // Hook anti-race-condition untuk delayed completion (280ms)
+  const { completingIds, handleToggleComplete } = useDelayedCompletion(onToggleComplete);
 
   const isDragDisabled = sortOption !== "manual";
 
@@ -406,85 +416,103 @@ export function ListView({
                   <button
                     type="button"
                     onClick={() => setIsCollapsed((prev) => ({ ...prev, [status]: !prev[status] }))}
-                    className="rounded-lg px-2 py-1 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-hover)] hover:text-[var(--text-primary)] transition-colors"
+                    className="p-1 rounded-lg text-[var(--text-secondary)] hover:bg-[var(--glass-hover)] hover:text-[var(--text-primary)] transition-colors min-h-[32px] min-w-[32px] flex items-center justify-center cursor-pointer"
                     aria-expanded={!isGroupCollapsed}
+                    aria-label={isGroupCollapsed ? `Buka grup ${config.label}` : `Tutup grup ${config.label}`}
                   >
-                    {isGroupCollapsed ? "Buka" : "Tutup"}
+                    <motion.span
+                      animate={{ rotate: isGroupCollapsed ? -90 : 0 }}
+                      transition={{ duration: 0.18, ease: "easeOut" }}
+                      className="inline-flex items-center justify-center"
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </motion.span>
                   </button>
                 </div>
 
-                {/* Group Content */}
-                {!isGroupCollapsed && (
-                  <div className="space-y-1.5 pl-1">
-                    <SortableContext items={groupTaskIds} strategy={verticalListSortingStrategy}>
-                      {groupList.map((task) => (
-                        <SortableRow
-                          key={task.id}
-                          task={task}
-                          serverNow={serverNow}
-                          isDragDisabled={isDragDisabled}
-                          onSelectTask={onSelectTask}
-                          onToggleComplete={onToggleComplete}
-                          onDeleteTask={onDeleteTask}
-                        />
-                      ))}
-                    </SortableContext>
+                {/* Group Content dengan transisi tinggi akordeon halus */}
+                <AnimatePresence initial={false}>
+                  {!isGroupCollapsed && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <div className="space-y-1.5 px-1 py-1">
+                        <SortableContext items={groupTaskIds} strategy={verticalListSortingStrategy}>
+                          {groupList.map((task) => (
+                            <SortableRow
+                              key={task.id}
+                              task={task}
+                              serverNow={serverNow}
+                              isDragDisabled={isDragDisabled}
+                              isCompleting={completingIds.has(task.id)}
+                              onSelectTask={onSelectTask}
+                              onToggleComplete={() => handleToggleComplete(task.id, task.status === "DONE")}
+                              onDeleteTask={onDeleteTask}
+                            />
+                          ))}
+                        </SortableContext>
 
-                    {/* Inline Quick Add Per Group */}
-                    {inlineGroup === status ? (
-                      <div className="flex items-center gap-2 p-2 rounded-xl border border-[var(--border-hairline)] bg-[var(--surface-subtle)]">
-                        <input
-                          type="text"
-                          autoFocus
-                          value={inlineTitle}
-                          onChange={(e) => setInlineTitle(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              void handleInlineSubmit(status);
-                            } else if (e.key === "Escape") {
-                              setInlineGroup(null);
+                        {/* Inline Quick Add Per Group */}
+                        {inlineGroup === status ? (
+                          <div className="flex items-center gap-2 p-2 rounded-xl border border-[var(--border-hairline)] bg-[var(--surface-subtle)]">
+                            <input
+                              type="text"
+                              autoFocus
+                              value={inlineTitle}
+                              onChange={(e) => setInlineTitle(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  void handleInlineSubmit(status);
+                                } else if (e.key === "Escape") {
+                                  setInlineGroup(null);
+                                  setInlineTitle("");
+                                }
+                              }}
+                              placeholder={`Tambah tugas di ${config.label}... (Enter simpan, Esc batal)`}
+                              aria-label={`Judul tugas baru di ${config.label}`}
+                              className="flex-1 bg-transparent text-xs font-sans text-[var(--text-primary)] outline-none px-2"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => void handleInlineSubmit(status)}
+                              disabled={isSubmittingInline || !inlineTitle.trim()}
+                              className="px-3 py-1 bg-[var(--accent-primary)] text-white text-xs font-semibold rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-all cursor-pointer"
+                            >
+                              {isSubmittingInline ? "Menyimpan..." : "Tambah"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setInlineGroup(null);
+                                setInlineTitle("");
+                              }}
+                              className="px-2 py-1 text-xs text-[var(--text-tertiary)] hover:text-[var(--text-primary)] cursor-pointer"
+                            >
+                              Batal
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setInlineGroup(status);
                               setInlineTitle("");
-                            }
-                          }}
-                          placeholder={`Tambah tugas di ${config.label}... (Enter simpan, Esc batal)`}
-                          aria-label={`Judul tugas baru di ${config.label}`}
-                          className="flex-1 bg-transparent text-xs font-sans text-[var(--text-primary)] outline-none px-2"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => void handleInlineSubmit(status)}
-                          disabled={isSubmittingInline || !inlineTitle.trim()}
-                          className="px-3 py-1 bg-[var(--accent-primary)] text-white text-xs font-semibold rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-all"
-                        >
-                          {isSubmittingInline ? "Menyimpan..." : "Tambah"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setInlineGroup(null);
-                            setInlineTitle("");
-                          }}
-                          className="px-2 py-1 text-xs text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
-                        >
-                          Batal
-                        </button>
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-hover)] rounded-xl transition-colors w-full justify-start border border-dashed border-transparent hover:border-[var(--border-hairline)] cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Tambah tugas di grup ini</span>
+                          </button>
+                        )}
                       </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setInlineGroup(status);
-                          setInlineTitle("");
-                        }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-hover)] rounded-xl transition-colors w-full justify-start border border-dashed border-transparent hover:border-[var(--border-hairline)]"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        <span>Tambah tugas di grup ini</span>
-                      </button>
-                    )}
-                  </div>
-                )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </section>
             );
           })}

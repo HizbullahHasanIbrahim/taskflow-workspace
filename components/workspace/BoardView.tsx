@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { motion } from "motion/react";
 import {
   DndContext,
   DragOverlay,
@@ -23,10 +24,11 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { TaskStatus } from "@prisma/client";
-import { Check, Plus, Calendar, Tag as TagIcon, CheckCircle2, Info } from "lucide-react";
+import { Plus, Calendar, Tag as TagIcon, CheckCircle2, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SerializedTaskWithRelations, SortOption } from "@/lib/types";
 import { PriorityBadge } from "./PriorityBadge";
+import { TaskCheckbox, useDelayedCompletion } from "./TaskCheckbox";
 
 interface BoardViewProps {
   tasks: SerializedTaskWithRelations[];
@@ -57,14 +59,16 @@ function SortableCard({
   task,
   serverNow,
   isDragDisabled,
+  isCompleting,
   onSelectTask,
   onToggleComplete,
 }: {
   task: SerializedTaskWithRelations;
   serverNow: string;
   isDragDisabled: boolean;
+  isCompleting: boolean;
   onSelectTask: (id: string) => void;
-  onToggleComplete: (id: string) => void;
+  onToggleComplete: () => void;
 }) {
   const {
     attributes,
@@ -118,32 +122,36 @@ function SortableCard({
           )}
         </div>
 
-        <button
-          type="button"
+        {/* Checkbox dengan haptic spring & path draw */}
+        <TaskCheckbox
+          checked={task.status === "DONE"}
+          isCompleting={isCompleting}
           onClick={(e) => {
             e.stopPropagation();
-            onToggleComplete(task.id);
+            onToggleComplete();
           }}
-          aria-label={task.status === "DONE" ? "Tandai belum selesai" : "Selesaikan tugas"}
-          className={cn(
-            "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all active:scale-90",
-            task.status === "DONE"
-              ? "border-emerald-500 bg-emerald-500 text-white"
-              : "border-[var(--border-strong)] hover:border-[var(--accent-primary)] hover:bg-[var(--accent-soft)]"
-          )}
-        >
-          {task.status === "DONE" && <Check className="h-2.5 w-2.5 stroke-[3]" />}
-        </button>
+          ariaLabel={task.status === "DONE" ? "Tandai belum selesai" : "Selesaikan tugas"}
+          size="sm"
+        />
       </div>
 
-      {/* Tengah: Judul Tugas */}
+      {/* Tengah: Judul Tugas dengan garis coret animasi saat completing */}
       <div
         className={cn(
-          "font-sans text-xs font-medium text-[var(--text-primary)] line-clamp-2 leading-relaxed mb-2.5",
-          task.status === "DONE" && "line-through text-[var(--text-tertiary)]"
+          "font-sans text-xs font-medium text-[var(--text-primary)] line-clamp-2 leading-relaxed mb-2.5 relative inline-block",
+          task.status === "DONE" && "line-through text-[var(--text-tertiary)]",
+          isCompleting && "opacity-60 text-[var(--text-tertiary)] transition-opacity"
         )}
       >
-        {task.title}
+        <span>{task.title}</span>
+        {isCompleting && (
+          <motion.span
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            className="absolute left-0 top-1/2 -translate-y-1/2 h-[1.5px] w-full bg-[var(--text-tertiary)] origin-left pointer-events-none"
+          />
+        )}
       </div>
 
       {/* Progress Bar Subtask (jika ada) */}
@@ -221,6 +229,7 @@ function KanbanColumn({
   tasks,
   serverNow,
   isDragDisabled,
+  completingIds,
   onSelectTask,
   onToggleComplete,
   onCreateTaskInStatus,
@@ -229,8 +238,9 @@ function KanbanColumn({
   tasks: SerializedTaskWithRelations[];
   serverNow: string;
   isDragDisabled: boolean;
+  completingIds: Set<string>;
   onSelectTask: (id: string) => void;
-  onToggleComplete: (id: string) => void;
+  onToggleComplete: (id: string, isDone: boolean) => void;
   onCreateTaskInStatus: (status: TaskStatus, title: string) => Promise<void>;
 }) {
   const { setNodeRef, isOver } = useDroppable({
@@ -301,8 +311,9 @@ function KanbanColumn({
               task={task}
               serverNow={serverNow}
               isDragDisabled={isDragDisabled}
+              isCompleting={completingIds.has(task.id)}
               onSelectTask={onSelectTask}
-              onToggleComplete={onToggleComplete}
+              onToggleComplete={() => onToggleComplete(task.id, task.status === "DONE")}
             />
           ))}
         </SortableContext>
@@ -386,6 +397,9 @@ export function BoardView({
   onMoveTask,
 }: BoardViewProps) {
   const [activeTask, setActiveTask] = useState<SerializedTaskWithRelations | null>(null);
+
+  // Hook anti-race-condition untuk delayed completion (280ms)
+  const { completingIds, handleToggleComplete } = useDelayedCompletion(onToggleComplete);
 
   const isDragDisabled = sortOption !== "manual";
 
@@ -514,8 +528,9 @@ export function BoardView({
               tasks={groupedTasks[status]}
               serverNow={serverNow}
               isDragDisabled={isDragDisabled}
+              completingIds={completingIds}
               onSelectTask={onSelectTask}
-              onToggleComplete={onToggleComplete}
+              onToggleComplete={handleToggleComplete}
               onCreateTaskInStatus={onCreateTaskInStatus}
             />
           ))}
