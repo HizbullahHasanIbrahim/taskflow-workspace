@@ -4,9 +4,9 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { prisma } from "../prisma";
-import { signJWT } from "../auth";
-import { loginSchema, registerSchema } from "../validations";
-import { ActionResponse } from "../types";
+import { signJWT, requireUser } from "../auth";
+import { loginSchema, registerSchema, updateProfileSchema } from "../validations";
+import { ActionResponse, SerializedUser } from "../types";
 
 /**
  * Pendaftaran akun baru + Auto-Seed onboarding data
@@ -181,4 +181,87 @@ export async function logoutAction() {
   const cookieStore = await cookies();
   cookieStore.delete("taskflow_session");
   redirect("/login");
+}
+
+/**
+ * Memperbarui profil pengguna (Nama, Email, dan opsional Password Baru)
+ */
+export async function updateProfileAction(formData: FormData): Promise<ActionResponse<SerializedUser>> {
+  const sessionUser = await requireUser();
+  const rawData = Object.fromEntries(formData.entries());
+  const validated = updateProfileSchema.safeParse(rawData);
+
+  if (!validated.success) {
+    return { ok: false, error: validated.error.issues[0].message };
+  }
+
+  const { name, email, currentPassword, newPassword } = validated.data;
+  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedName = name.trim();
+
+  try {
+    // 1. Cek apakah email diubah dan sudah terdaftar pada akun lain
+    if (normalizedEmail !== sessionUser.email) {
+      const existingUser = await prisma.user.findUnique({
+        where: { email: normalizedEmail },
+        select: { id: true },
+      });
+      if (existingUser && existingUser.id !== sessionUser.id) {
+        return { ok: false, error: "Email sudah digunakan oleh akun lain." };
+      }
+    }
+
+    // 2. Cek verifikasi password jika ingin mengganti password
+    let passwordHashToUpdate: string | undefined;
+    if (newPassword) {
+      if (!currentPassword) {
+        return { ok: false, error: "Password saat ini wajib diisi untuk mengganti password." };
+      }
+
+      const dbUser = await prisma.user.findUnique({
+        where: { id: sessionUser.id },
+        select: { passwordHash: true },
+      });
+
+      if (!dbUser) {
+        return { ok: false, error: "Pengguna tidak ditemukan." };
+      }
+
+      const isCurrentValid = await bcrypt.compare(currentPassword, dbUser.passwordHash);
+      if (!isCurrentValid) {
+        return { ok: false, error: "Password saat ini tidak sesuai." };
+      }
+
+      passwordHashToUpdate = await bcrypt.hash(newPassword, 10);
+    }
+
+    // 3. Update data di database dengan select eksplisit (anti bocor passwordHash)
+    const updatedUser = await prisma.user.update({
+      where: { id: sessionUser.id },
+      data: {
+        name: normalizedName,
+        email: normalizedEmail,
+        ...(passwordHashToUpdate ? { passwordHash: passwordHashToUpdate } : {}),
+      },
+      select: { id: true, name: true, email: true },
+    });
+
+    // 4. Perbarui cookie sesi JWT jika email berubah
+    if (normalizedEmail !== sessionUser.email) {
+      const token = await signJWT({ userId: updatedUser.id, email: updatedUser.email });
+      const cookieStore = await cookies();
+      cookieStore.set("taskflow_session", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 7,
+        path: "/",
+      });
+    }
+
+    return { ok: true, data: updatedUser };
+  } catch (error) {
+    console.error("Update Profile Error:", error);
+    return { ok: false, error: "Terjadi kesalahan saat memperbarui profil." };
+  }
 }

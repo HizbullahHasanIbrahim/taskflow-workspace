@@ -93,7 +93,7 @@
   /* Typography */
   --text-primary: #f5f7fa;
   --text-secondary: #9aa7bc;
-  --text-tertiary: #64748b;
+  --text-tertiary: #8494ad;
 
   /* Brand Accent */
   --accent-primary: #0a84ff;
@@ -135,7 +135,25 @@
     color: var(--text-primary);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    transition: background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
+}
+
+/* Transisi mulus antar tema untuk surface & header/sidebar */
+header,
+aside,
+nav,
+.fluid-glass,
+.fluid-glass-elevated {
+  transition: background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.3s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .fluid-glass {

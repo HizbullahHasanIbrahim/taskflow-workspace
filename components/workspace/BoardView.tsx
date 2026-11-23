@@ -22,10 +22,11 @@ import {
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { TaskStatus, TaskPriority } from "@prisma/client";
+import { TaskStatus } from "@prisma/client";
 import { Check, Plus, Calendar, Tag as TagIcon, CheckCircle2, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SerializedTaskWithRelations, SortOption } from "@/lib/types";
+import { PriorityBadge } from "./PriorityBadge";
 
 interface BoardViewProps {
   tasks: SerializedTaskWithRelations[];
@@ -49,29 +50,6 @@ const STATUS_CONFIG: Record<TaskStatus, { label: string; dotClass: string }> = {
   IN_PROGRESS: { label: "In Progress", dotClass: "bg-[var(--status-progress)]" },
   REVIEW: { label: "Review", dotClass: "bg-[var(--status-review)]" },
   DONE: { label: "Done", dotClass: "bg-[var(--status-done)]" },
-};
-
-const PRIORITY_STYLES: Record<TaskPriority, { text: string; bg: string; border: string }> = {
-  URGENT: {
-    text: "text-[var(--prio-urgent-text)]",
-    bg: "bg-[var(--prio-urgent-bg)]",
-    border: "border-[var(--prio-urgent-border)]",
-  },
-  HIGH: {
-    text: "text-[var(--prio-high-text)]",
-    bg: "bg-[var(--prio-high-bg)]",
-    border: "border-[var(--prio-high-border)]",
-  },
-  MEDIUM: {
-    text: "text-[var(--prio-medium-text)]",
-    bg: "bg-[var(--prio-medium-bg)]",
-    border: "border-[var(--prio-medium-border)]",
-  },
-  LOW: {
-    text: "text-[var(--prio-low-text)]",
-    bg: "bg-[var(--prio-low-bg)]",
-    border: "border-[var(--prio-low-border)]",
-  },
 };
 
 // Komponen kartu Kanban yang dapat di-drag
@@ -113,7 +91,6 @@ function SortableCard({
 
   const completedSubtasks = task.subtasks.filter((s) => s.isCompleted).length;
   const totalSubtasks = task.subtasks.length;
-  const prio = PRIORITY_STYLES[task.priority];
 
   return (
     <div
@@ -130,19 +107,10 @@ function SortableCard({
       {/* Baris Atas: Priority Badge + List Name + Quick Checkbox */}
       <div className="flex items-center justify-between gap-2 mb-2">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span
-            className={cn(
-              "rounded border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider font-semibold",
-              prio.bg,
-              prio.text,
-              prio.border
-            )}
-          >
-            {task.priority}
-          </span>
+          <PriorityBadge priority={task.priority} size="sm" />
           {task.list && (
             <span
-              className="text-[9px] font-medium px-1.5 py-0.5 rounded border border-[var(--border-hairline)] bg-[var(--surface-subtle)] text-[var(--text-tertiary)] truncate max-w-[100px]"
+              className="text-[10px] font-medium px-1.5 py-0.5 rounded border border-[var(--border-hairline)] bg-[var(--surface-subtle)] text-[var(--text-tertiary)] truncate max-w-[100px]"
               style={{ borderLeftColor: task.list.color, borderLeftWidth: 3 }}
             >
               {task.list.name}
@@ -303,7 +271,7 @@ function KanbanColumn({
       <div className="flex items-center justify-between mb-3 px-1">
         <div className="flex items-center gap-2">
           <span className={cn("h-2.5 w-2.5 rounded-full shrink-0", config.dotClass)} />
-          <h2 className="font-sans text-xs font-bold text-[var(--text-secondary)]">
+          <h2 className="font-sans text-xs font-semibold text-[var(--text-secondary)]">
             {config.label}
           </h2>
           <span className="font-mono text-[10px] tabular-nums text-[var(--text-tertiary)] px-1.5 py-0.2 rounded bg-[var(--surface-solid)] border border-[var(--border-hairline)]">
@@ -318,7 +286,7 @@ function KanbanColumn({
             setInlineTitle("");
           }}
           aria-label={`Tambah tugas di kolom ${config.label}`}
-          className="p-1 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-hover)] transition-colors"
+          className="p-1 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-hover)] transition-colors min-h-[32px] min-w-[32px] flex items-center justify-center"
         >
           <Plus className="w-4 h-4" />
         </button>
@@ -341,7 +309,7 @@ function KanbanColumn({
 
         {tasks.length === 0 && !isAdding && (
           <div className="flex flex-col items-center justify-center p-6 text-center border border-dashed border-[var(--border-hairline)] rounded-xl my-2">
-            <span className="text-xs text-[var(--text-tertiary)]">Kosong</span>
+            <span className="text-xs font-medium text-[var(--text-tertiary)]">Belum ada tugas</span>
           </div>
         )}
 
@@ -530,8 +498,9 @@ export function BoardView({
         </div>
       )}
 
-      {/* Kontainer Grid / Horisontal Scroll Kanban */}
+      {/* Kontainer Grid / Horisontal Scroll Kanban (id statis mencegah hydration mismatch aria-describedby di SSR) */}
       <DndContext
+        id="dnd-board-view"
         sensors={sensors}
         collisionDetection={collisionDetectionStrategy}
         onDragStart={handleDragStart}
@@ -557,19 +526,10 @@ export function BoardView({
           {activeTask ? (
             <div className="rounded-xl bg-[var(--surface-solid)] p-3.5 shadow-2xl border border-[var(--accent-primary)] scale-[1.03] rotate-[0.8deg] fluid-glass-elevated cursor-grabbing opacity-95">
               <div className="flex items-center justify-between gap-2 mb-2">
-                <span
-                  className={cn(
-                    "rounded border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider font-semibold",
-                    PRIORITY_STYLES[activeTask.priority].bg,
-                    PRIORITY_STYLES[activeTask.priority].text,
-                    PRIORITY_STYLES[activeTask.priority].border
-                  )}
-                >
-                  {activeTask.priority}
-                </span>
-                <span className="text-[10px] font-mono text-[var(--text-tertiary)]">Memindahkan...</span>
+                <PriorityBadge priority={activeTask.priority} size="sm" />
+                <span className="text-[10px] font-sans text-[var(--text-tertiary)]">Memindahkan...</span>
               </div>
-              <div className="font-sans text-xs font-semibold text-[var(--text-primary)] line-clamp-2">
+              <div className="font-sans text-xs font-medium text-[var(--text-primary)] line-clamp-2">
                 {activeTask.title}
               </div>
             </div>

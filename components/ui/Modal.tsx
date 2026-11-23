@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from "motion/react";
 import { useEffect } from "react";
 import { X } from "lucide-react";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 
 export interface ModalProps {
   title?: string;
@@ -14,6 +15,8 @@ export interface ModalProps {
 
 export function Modal({ title, children, onClose, isOpen, className = "" }: ModalProps) {
   const modalClassName = className;
+  const modalRef = useFocusTrap<HTMLDivElement>(isOpen);
+
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -40,6 +43,7 @@ export function Modal({ title, children, onClose, isOpen, className = "" }: Moda
           aria-label={title || "Modal"}
         >
           <motion.div
+            ref={modalRef}
             initial={{ opacity: 0, y: 16, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.97 }}
@@ -56,7 +60,7 @@ export function Modal({ title, children, onClose, isOpen, className = "" }: Moda
                 type="button"
                 onClick={onClose}
                 aria-label="Tutup dialog"
-                className="p-1.5 -mr-1 rounded-lg hover:bg-[var(--glass-hover)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors shrink-0"
+                className="p-2 -mr-1 rounded-xl hover:bg-[var(--glass-hover)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
               </button>

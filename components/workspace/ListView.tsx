@@ -32,11 +32,15 @@ import {
 import { cn } from "@/lib/utils";
 import { SerializedTaskWithRelations, SortOption } from "@/lib/types";
 import { TaskStatus } from "@prisma/client";
+import { PriorityBadge } from "./PriorityBadge";
 
 interface ListViewProps {
   tasks: SerializedTaskWithRelations[];
   serverNow: string;
   sortOption: SortOption;
+  isFiltered?: boolean;
+  onResetFilters?: () => void;
+  onFocusQuickAdd?: () => void;
   onSelectTask: (taskId: string) => void;
   onToggleComplete: (taskId: string) => void;
   onDeleteTask: (taskId: string) => void;
@@ -165,18 +169,8 @@ function SortableRow({
 
       {/* Badges and Metadata */}
       <div className="flex items-center gap-2 shrink-0">
-        {/* Priority Badge */}
-        <span
-          className={cn(
-            "rounded border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider font-semibold",
-            task.priority === "URGENT" && "border-[var(--prio-urgent-border)] bg-[var(--prio-urgent-bg)] text-[var(--prio-urgent-text)]",
-            task.priority === "HIGH" && "border-[var(--prio-high-border)] bg-[var(--prio-high-bg)] text-[var(--prio-high-text)]",
-            task.priority === "MEDIUM" && "border-[var(--prio-medium-border)] bg-[var(--prio-medium-bg)] text-[var(--prio-medium-text)]",
-            task.priority === "LOW" && "border-[var(--border-hairline)] bg-[var(--surface-subtle)] text-[var(--text-tertiary)]"
-          )}
-        >
-          {task.priority}
-        </span>
+        {/* Color-Blind Safe Priority Badge */}
+        <PriorityBadge priority={task.priority} size="sm" />
 
         {/* Subtask Progress (e.g. 2/4) */}
         {totalSubtasks > 0 && (
@@ -245,6 +239,9 @@ export function ListView({
   tasks,
   serverNow,
   sortOption,
+  isFiltered = false,
+  onResetFilters,
+  onFocusQuickAdd,
   onSelectTask,
   onToggleComplete,
   onDeleteTask,
@@ -345,11 +342,30 @@ export function ListView({
           <Inbox className="w-6 h-6" />
         </div>
         <h3 className="font-display font-semibold text-sm text-[var(--text-primary)] mb-1">
-          Tidak ada tugas
+          {isFiltered ? "Tidak ada tugas yang sesuai filter" : "Belum ada tugas di scope ini"}
         </h3>
-        <p className="text-xs text-[var(--text-tertiary)] max-w-xs">
-          Belum ada tugas pada scope atau filter ini. Ketik di bar atas atau tekan <strong>N</strong> untuk menambahkan tugas baru.
+        <p className="text-xs text-[var(--text-tertiary)] max-w-xs mb-4">
+          {isFiltered
+            ? "Coba sesuaikan kata kunci pencarian, filter prioritas, atau filter tag."
+            : "Tambahkan tugas baru melalui Smart Quick-Add atau tombol di bawah."}
         </p>
+        {isFiltered ? (
+          <button
+            type="button"
+            onClick={onResetFilters}
+            className="min-h-[44px] px-4 py-2 rounded-xl bg-[var(--surface-subtle)] border border-[var(--border-hairline)] hover:border-[var(--border-strong)] text-xs font-semibold text-[var(--text-primary)] transition-all cursor-pointer"
+          >
+            Reset Filter
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onFocusQuickAdd}
+            className="min-h-[44px] px-4 py-2 rounded-xl bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-xs font-semibold text-white transition-all shadow-sm cursor-pointer"
+          >
+            Buat Tugas Baru (N)
+          </button>
+        )}
       </div>
     );
   }
@@ -358,7 +374,9 @@ export function ListView({
 
   return (
     <div className="flex-1 overflow-y-auto overscroll-contain px-4 sm:px-8 py-4">
+      {/* Wajib menyertakan id statis pada DndContext untuk mencegah error hydration mismatch pada aria-describedby di Next.js SSR */}
       <DndContext
+        id="dnd-list-view"
         sensors={sensors}
         collisionDetection={closestCorners}
         onDragStart={handleDragStart}

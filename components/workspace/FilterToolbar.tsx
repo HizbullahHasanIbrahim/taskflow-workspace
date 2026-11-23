@@ -48,14 +48,14 @@ export function FilterToolbar({
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Cari tugas..."
               aria-label="Cari tugas berdasarkan judul atau deskripsi"
-              className="w-full pl-8 pr-7 py-1.5 rounded-lg border border-[var(--border-hairline)] bg-[var(--surface-solid)] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] text-xs outline-none focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)] transition-all"
+              className="w-full min-h-[44px] md:min-h-[34px] pl-8 pr-7 py-1.5 rounded-lg border border-[var(--border-hairline)] bg-[var(--surface-solid)] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] text-xs outline-none focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)] transition-all"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => onSearchChange("")}
                 aria-label="Hapus pencarian"
-                className="absolute right-2 p-0.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+                className="absolute right-2 p-1 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors min-h-[32px] min-w-[32px] flex items-center justify-center"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -68,13 +68,13 @@ export function FilterToolbar({
               value={priorityFilter}
               onChange={(e) => onPriorityChange(e.target.value as PriorityFilterOption)}
               aria-label="Filter berdasarkan prioritas"
-              className="px-2.5 py-1.5 rounded-lg border border-[var(--border-hairline)] bg-[var(--surface-solid)] text-[var(--text-secondary)] font-medium text-xs outline-none hover:border-[var(--border-strong)] focus:border-[var(--accent-primary)] transition-colors cursor-pointer"
+              className="min-h-[44px] md:min-h-[34px] px-2.5 py-1.5 rounded-lg border border-[var(--border-hairline)] bg-[var(--surface-solid)] text-[var(--text-secondary)] font-medium text-xs outline-none hover:border-[var(--border-strong)] focus:border-[var(--accent-primary)] transition-colors cursor-pointer"
             >
               <option value="ALL">Semua Prioritas</option>
-              <option value="URGENT">Urgent</option>
-              <option value="HIGH">High</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="LOW">Low</option>
+              <option value="URGENT">Mendesak</option>
+              <option value="HIGH">Tinggi</option>
+              <option value="MEDIUM">Sedang</option>
+              <option value="LOW">Rendah</option>
             </select>
           </div>
 
@@ -85,7 +85,7 @@ export function FilterToolbar({
                 value={selectedTagId || ""}
                 onChange={(e) => onTagChange(e.target.value ? e.target.value : null)}
                 aria-label="Filter berdasarkan tag"
-                className="px-2.5 py-1.5 rounded-lg border border-[var(--border-hairline)] bg-[var(--surface-solid)] text-[var(--text-secondary)] font-medium text-xs outline-none hover:border-[var(--border-strong)] focus:border-[var(--accent-primary)] transition-colors cursor-pointer"
+                className="min-h-[44px] md:min-h-[34px] px-2.5 py-1.5 rounded-lg border border-[var(--border-hairline)] bg-[var(--surface-solid)] text-[var(--text-secondary)] font-medium text-xs outline-none hover:border-[var(--border-strong)] focus:border-[var(--accent-primary)] transition-colors cursor-pointer"
               >
                 <option value="">Semua Tag</option>
                 {tags.map((t) => (
@@ -103,10 +103,10 @@ export function FilterToolbar({
               type="button"
               onClick={onResetFilters}
               aria-label="Reset semua filter"
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-dashed border-[var(--border-hairline)] bg-[var(--surface-subtle)] text-[var(--text-tertiary)] hover:text-rose-500 hover:border-rose-500/30 transition-all text-xs font-semibold"
+              className="min-h-[44px] md:min-h-[34px] flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-dashed border-[var(--border-hairline)] bg-[var(--surface-subtle)] text-[var(--text-tertiary)] hover:text-rose-500 hover:border-rose-500/30 transition-all text-xs font-medium cursor-pointer"
             >
-              <RotateCcw className="w-3 h-3" />
-              <span className="hidden sm:inline">Reset</span>
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Reset Filter</span>
             </button>
           )}
         </div>
@@ -119,7 +119,7 @@ export function FilterToolbar({
             value={sortOption}
             onChange={(e) => onSortChange(e.target.value as SortOption)}
             aria-label="Pilihan pengurutan"
-            className="px-2.5 py-1.5 rounded-lg border border-[var(--border-hairline)] bg-[var(--surface-solid)] text-[var(--text-secondary)] font-medium text-xs outline-none hover:border-[var(--border-strong)] focus:border-[var(--accent-primary)] transition-colors cursor-pointer"
+            className="min-h-[44px] md:min-h-[34px] px-2.5 py-1.5 rounded-lg border border-[var(--border-hairline)] bg-[var(--surface-solid)] text-[var(--text-secondary)] font-medium text-xs outline-none hover:border-[var(--border-strong)] focus:border-[var(--accent-primary)] transition-colors cursor-pointer"
           >
             <option value="manual">Manual (Drag)</option>
             <option value="dueDate">Tenggat Terdekat</option>

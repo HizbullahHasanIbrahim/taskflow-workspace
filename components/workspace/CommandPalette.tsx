@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 import {
   Search,
   Plus,
@@ -30,6 +31,20 @@ interface CommandPaletteProps {
   onFocusQuickAdd: () => void;
 }
 
+const STATUS_TEXT: Record<string, string> = {
+  TODO: "To Do",
+  IN_PROGRESS: "In Progress",
+  REVIEW: "Review",
+  DONE: "Done",
+};
+
+const PRIORITY_TEXT: Record<string, string> = {
+  URGENT: "Mendesak",
+  HIGH: "Tinggi",
+  MEDIUM: "Sedang",
+  LOW: "Rendah",
+};
+
 interface CommandItem {
   id: string;
   section: "actions" | "lists" | "tasks";
@@ -54,6 +69,7 @@ export function CommandPalette({
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const modalRef = useFocusTrap<HTMLDivElement>(isOpen);
 
   // Toggle tema gelap/terang
   const toggleTheme = () => {
@@ -189,7 +205,9 @@ export function CommandPalette({
       id: `task-${t.id}`,
       section: "tasks",
       title: t.title,
-      subtitle: t.description || `Status: ${t.status} | Prioritas: ${t.priority}`,
+      subtitle:
+        t.description ||
+        `Status: ${STATUS_TEXT[t.status] || t.status} • Prioritas: ${PRIORITY_TEXT[t.priority] || t.priority}`,
       icon: CheckSquare,
       perform: () => {
         onClose();
@@ -282,6 +300,7 @@ export function CommandPalette({
           aria-label="Command Palette"
         >
           <motion.div
+            ref={modalRef}
             initial={{ opacity: 0, scale: 0.96, y: -8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: -8 }}
@@ -337,7 +356,7 @@ export function CommandPalette({
               {groupedSections.length > 0 ? (
                 groupedSections.map((section) => (
                   <div key={section.key} className="space-y-1">
-                    <div className="px-3 py-1 text-[10px] font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">
+                    <div className="px-3 py-1 font-sans text-xs font-medium text-[var(--text-secondary)]">
                       {section.label}
                     </div>
 

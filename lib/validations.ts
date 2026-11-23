@@ -12,6 +12,13 @@ export const registerSchema = z.object({
   password: z.string().min(8, "Password minimal 8 karakter").max(100, "Password maksimal 100 karakter"),
 });
 
+export const updateProfileSchema = z.object({
+  name: z.string().trim().min(2, "Nama minimal 2 karakter").max(80, "Nama maksimal 80 karakter"),
+  email: z.string().trim().toLowerCase().email("Format email tidak valid").max(255, "Email maksimal 255 karakter"),
+  currentPassword: z.string().max(100).optional(),
+  newPassword: z.string().min(8, "Password baru minimal 8 karakter").max(100, "Password baru maksimal 100 karakter").optional(),
+});
+
 // TaskList Schemas
 export const createListSchema = z.object({
   name: z.string().trim().min(1, "Nama list wajib diisi").max(80, "Nama list maksimal 80 karakter"),

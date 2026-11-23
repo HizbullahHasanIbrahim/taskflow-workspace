@@ -21,10 +21,10 @@ import {
   Calendar,
   Clock,
   CheckCircle2,
+  PanelLeftClose,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SerializedTaskList, SerializedUser, WorkspaceScope } from "@/lib/types";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { logoutAction } from "@/lib/actions/auth";
 import { Modal } from "@/components/ui/Modal";
 import { createListAction, updateListAction, deleteListAction } from "@/lib/actions/lists";
@@ -62,6 +62,8 @@ interface SidebarProps {
   taskCountsByScope: Record<string, number>;
   activeScope: WorkspaceScope;
   onSelectScope: (scope: WorkspaceScope) => void;
+  isSidebarOpen: boolean;
+  onToggleDesktopSidebar?: () => void;
   isOpenMobile: boolean;
   onCloseMobile: () => void;
   onListCreated?: (list: SerializedTaskList) => void;
@@ -75,6 +77,8 @@ export function Sidebar({
   taskCountsByScope,
   activeScope,
   onSelectScope,
+  isSidebarOpen,
+  onToggleDesktopSidebar,
   isOpenMobile,
   onCloseMobile,
   onListCreated,
@@ -188,10 +192,22 @@ export function Sidebar({
           <span className="font-display font-bold text-lg tracking-tight">TaskFlow</span>
         </div>
 
+        {/* Tombol Hide Sidebar di Desktop (berada persis di samping tulisan TaskFlow) */}
+        <button
+          type="button"
+          onClick={onToggleDesktopSidebar}
+          className="hidden md:flex p-1.5 rounded-lg hover:bg-[var(--glass-hover)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors min-w-[32px] min-h-[32px] items-center justify-center cursor-pointer"
+          aria-label="Sembunyikan sidebar"
+          title="Sembunyikan sidebar (⌘B)"
+        >
+          <PanelLeftClose className="w-4 h-4" />
+        </button>
+
+        {/* Tombol Tutup Sidebar di Mobile */}
         <button
           type="button"
           onClick={onCloseMobile}
-          className="md:hidden p-1.5 rounded-lg hover:bg-[var(--glass-hover)] text-[var(--text-tertiary)]"
+          className="md:hidden p-1.5 rounded-lg hover:bg-[var(--glass-hover)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer"
           aria-label="Tutup sidebar"
         >
           <X className="w-5 h-5" />
@@ -202,8 +218,8 @@ export function Sidebar({
       <div className="flex-1 overflow-y-auto p-3 space-y-6">
         {/* Smart Views */}
         <div>
-          <div className="px-3 mb-2 text-[10px] font-mono font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">
-            Smart Views
+          <div className="px-3 mb-2 font-sans text-xs font-medium text-[var(--text-secondary)]">
+            Tampilan Cerdas
           </div>
           <div className="space-y-0.5">
             {smartViews.map((sv) => {
@@ -218,7 +234,7 @@ export function Sidebar({
                     onCloseMobile();
                   }}
                   className={cn(
-                    "relative w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-colors",
+                    "relative w-full min-h-[44px] md:min-h-[36px] flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-colors",
                     isActive
                       ? "text-[var(--text-primary)] font-semibold"
                       : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-hover)]"
@@ -247,13 +263,13 @@ export function Sidebar({
         {/* Custom Lists */}
         <div>
           <div className="px-3 mb-2 flex items-center justify-between">
-            <span className="text-[10px] font-mono font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">
+            <span className="font-sans text-xs font-medium text-[var(--text-secondary)]">
               Daftar Tugas
             </span>
             <button
               type="button"
               onClick={handleOpenAddModal}
-              className="p-1 rounded-lg hover:bg-[var(--glass-hover)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+              className="p-1 rounded-lg hover:bg-[var(--glass-hover)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors min-h-[32px] min-w-[32px] flex items-center justify-center"
               aria-label="Tambah List Baru"
             >
               <Plus className="w-4 h-4" />
@@ -275,7 +291,7 @@ export function Sidebar({
                     onCloseMobile();
                   }}
                   className={cn(
-                    "group relative flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium cursor-pointer transition-colors",
+                    "group relative min-h-[44px] md:min-h-[36px] flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium cursor-pointer transition-colors",
                     isActive
                       ? "text-[var(--text-primary)] font-semibold"
                       : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-hover)]"
@@ -343,12 +359,12 @@ export function Sidebar({
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          <ThemeToggle />
           <form action={logoutAction}>
             <button
               type="submit"
-              className="p-2 rounded-xl hover:bg-rose-500/10 hover:text-rose-500 text-[var(--text-tertiary)] transition-colors"
+              className="p-2 rounded-xl hover:bg-rose-500/10 hover:text-rose-500 text-[var(--text-tertiary)] transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer"
               aria-label="Keluar dari akun"
+              title="Keluar (Log Out)"
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -364,7 +380,7 @@ export function Sidebar({
       >
         <form onSubmit={handleSaveList} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Nama List</label>
+            <label className="font-sans text-xs font-medium text-[var(--text-secondary)]">Nama Daftar</label>
             <input
               type="text"
               value={listName}
@@ -376,7 +392,7 @@ export function Sidebar({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Warna List</label>
+            <label className="font-sans text-xs font-medium text-[var(--text-secondary)]">Warna Daftar</label>
             <div className="flex items-center gap-2 flex-wrap">
               {APPLE_COLORS.map((c) => (
                 <button
@@ -397,7 +413,7 @@ export function Sidebar({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Ikon List</label>
+            <label className="font-sans text-xs font-medium text-[var(--text-secondary)]">Ikon Daftar</label>
             <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
               {Object.keys(ICON_MAP).map((iconKey) => {
                 const IconComp = ICON_MAP[iconKey];
@@ -478,10 +494,22 @@ export function Sidebar({
 
   return (
     <>
-      {/* Desktop Sidebar Fixed */}
-      <aside className="hidden md:block w-[260px] h-[100dvh] shrink-0 border-r border-[var(--border-hairline)] z-20">
-        {content}
-      </aside>
+      {/* Desktop Sidebar Animasi Hide / Expand */}
+      <AnimatePresence initial={false}>
+        {isSidebarOpen && (
+          <motion.aside
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 260, opacity: 1 }}
+            exit={{ width: 0, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 380, damping: 34 }}
+            className="hidden md:flex flex-col h-[100dvh] shrink-0 border-r border-[var(--border-hairline)] z-20 overflow-hidden"
+          >
+            <div className="w-[260px] h-full flex flex-col">
+              {content}
+            </div>
+          </motion.aside>
+        )}
+      </AnimatePresence>
 
       {/* Mobile Drawer Slide-over */}
       <AnimatePresence>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { X, Trash2, Check, CalendarDays, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 import { SerializedTaskWithRelations, SerializedTaskList, SerializedTag, SerializedTask } from "@/lib/types";
 import { TaskStatus, TaskPriority } from "@prisma/client";
 
@@ -55,6 +56,7 @@ export function TaskDetailDrawer({
   // Inline Subtask Edit State
   const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null);
   const [subtaskEditValue, setSubtaskEditValue] = useState("");
+  const drawerRef = useFocusTrap<HTMLDivElement>(Boolean(task));
 
   const saveTitle = () => {
     if (title.trim() && title !== task.title) {
@@ -103,6 +105,7 @@ export function TaskDetailDrawer({
 
   return (
     <motion.aside
+      ref={drawerRef}
       initial={{ opacity: 0, x: 24 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 24 }}
@@ -117,10 +120,10 @@ export function TaskDetailDrawer({
         <div className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-[var(--border-strong)] md:hidden" />
         <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--border-hairline)] p-4">
           <div className="flex items-center gap-2">
-            <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--text-tertiary)]">
-              {saveStatus === "saving" ? "Menyimpan..." : "Detail Tugas"}
+            <span className="font-sans text-xs font-medium text-[var(--text-secondary)]">
+              {saveStatus === "saving" ? "Menyimpan perubahan..." : "Detail Tugas"}
             </span>
-            {saveStatus === "saved" && <Check className="w-3 h-3 text-emerald-500" />}
+            {saveStatus === "saved" && <Check className="w-3.5 h-3.5 text-emerald-500" />}
           </div>
           <div className="flex items-center gap-1">
             <button
@@ -138,8 +141,10 @@ export function TaskDetailDrawer({
         </header>
 
         <div className="overscroll-contain space-y-5 overflow-y-auto p-5">
-          <div className="space-y-2">
-            <label htmlFor="task-title" className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Judul</label>
+          <div className="space-y-1.5">
+            <label htmlFor="task-title" className="font-sans text-xs font-medium text-[var(--text-secondary)]">
+              Judul Tugas
+            </label>
             <input
               id="task-title"
               value={title}
@@ -152,7 +157,7 @@ export function TaskDetailDrawer({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-xl border border-[var(--border-hairline)] bg-[var(--surface-subtle)] p-3">
-              <div className="mb-1 text-[10px] uppercase tracking-wider text-[var(--text-tertiary)]">Status</div>
+              <div className="mb-1 font-sans text-xs font-medium text-[var(--text-secondary)]">Status</div>
               <select
                 value={task.status}
                 onChange={async (e) => {
@@ -160,29 +165,35 @@ export function TaskDetailDrawer({
                   await onSave({ status: newStatus });
                 }}
                 aria-label="Status tugas"
-                className="w-full bg-transparent text-xs font-semibold outline-none"
+                className="w-full bg-transparent text-xs font-medium outline-none cursor-pointer"
               >
-                {["TODO", "IN_PROGRESS", "REVIEW", "DONE"].map(s => <option key={s} value={s}>{s}</option>)}
+                <option value="TODO">To Do</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="REVIEW">Review</option>
+                <option value="DONE">Done</option>
               </select>
             </div>
             <div className="rounded-xl border border-[var(--border-hairline)] bg-[var(--surface-subtle)] p-3">
-              <div className="mb-1 text-[10px] uppercase tracking-wider text-[var(--text-tertiary)]">Prioritas</div>
+              <div className="mb-1 font-sans text-xs font-medium text-[var(--text-secondary)]">Prioritas</div>
               <select
                 value={task.priority}
                 onChange={async (e) => await onSave({ priority: e.target.value as TaskPriority })}
                 aria-label="Prioritas tugas"
-                className="w-full bg-transparent text-xs font-semibold outline-none"
+                className="w-full bg-transparent text-xs font-medium outline-none cursor-pointer"
               >
-                {["URGENT", "HIGH", "MEDIUM", "LOW"].map(p => <option key={p} value={p}>{p}</option>)}
+                <option value="URGENT">Mendesak</option>
+                <option value="HIGH">Tinggi</option>
+                <option value="MEDIUM">Sedang</option>
+                <option value="LOW">Rendah</option>
               </select>
             </div>
             <div className="col-span-2 rounded-xl border border-[var(--border-hairline)] bg-[var(--surface-subtle)] p-3">
-              <div className="mb-1 text-[10px] uppercase tracking-wider text-[var(--text-tertiary)]">Daftar</div>
+              <div className="mb-1 font-sans text-xs font-medium text-[var(--text-secondary)]">Daftar</div>
               <select
                 value={task.listId}
                 onChange={async (e) => await onSave({ listId: e.target.value })}
                 aria-label="Pindah daftar"
-                className="w-full bg-transparent text-xs font-semibold outline-none"
+                className="w-full bg-transparent text-xs font-medium outline-none cursor-pointer"
               >
                 {lists.map(list => <option key={list.id} value={list.id}>{list.name}</option>)}
               </select>
@@ -190,7 +201,7 @@ export function TaskDetailDrawer({
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
+            <div className="flex items-center gap-1.5 font-sans text-xs font-medium text-[var(--text-secondary)]">
               <CalendarDays className="h-3.5 w-3.5" /> Tenggat Waktu
             </div>
             <input
@@ -211,7 +222,7 @@ export function TaskDetailDrawer({
                     if (label === "+7 Hari") d.setDate(d.getDate() + 7);
                     void onSave({ dueDate: d.toISOString() });
                   }}
-                  className="min-h-[44px] flex-1 rounded-xl border border-[var(--border-hairline)] bg-[var(--surface-subtle)] text-[10px] font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
+                  className="min-h-[44px] flex-1 rounded-xl border border-[var(--border-hairline)] bg-[var(--surface-subtle)] text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
                 >
                   {label}
                 </button>
@@ -219,22 +230,24 @@ export function TaskDetailDrawer({
               <button
                 type="button"
                 onClick={() => void onSave({ dueDate: null })}
-                className="min-h-[44px] flex-1 rounded-xl border border-[var(--border-hairline)] text-[10px] font-semibold text-[var(--text-tertiary)] hover:text-rose-500 transition-all"
+                className="min-h-[44px] flex-1 rounded-xl border border-[var(--border-hairline)] text-xs font-medium text-[var(--text-tertiary)] hover:text-rose-500 transition-all"
               >
                 Hapus
               </button>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label htmlFor="task-description" className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Deskripsi</label>
+          <div className="space-y-1.5">
+            <label htmlFor="task-description" className="font-sans text-xs font-medium text-[var(--text-secondary)]">
+              Catatan &amp; Deskripsi
+            </label>
             <textarea
               id="task-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               onBlur={saveDescription}
               rows={3}
-              placeholder="Tambahkan catatan..."
+              placeholder="Tambahkan catatan atau rincian tugas..."
               className="w-full resize-none rounded-xl border border-[var(--border-hairline)] bg-[var(--surface-subtle)] p-3 text-xs leading-relaxed outline-none focus:ring-2 focus:ring-[var(--accent-primary)]"
             />
           </div>
@@ -242,8 +255,8 @@ export function TaskDetailDrawer({
           {/* Subtask Section */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Subtask</span>
-              <span className="font-mono text-[10px] tabular-nums text-[var(--text-secondary)]">
+              <span className="font-sans text-xs font-medium text-[var(--text-secondary)]">Subtask</span>
+              <span className="font-mono text-xs tabular-nums text-[var(--text-secondary)]">
                 {task.subtasks.filter(s => s.isCompleted).length}/{task.subtasks.length}
               </span>
             </div>
@@ -252,12 +265,12 @@ export function TaskDetailDrawer({
             </div>
             <div className="space-y-1">
               {task.subtasks.map(subtask => (
-                <div key={subtask.id} className="group flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-[var(--glass-hover)]">
+                <div key={subtask.id} className="group flex min-h-[36px] items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-[var(--glass-hover)]">
                   <button
                     type="button"
                     onClick={() => onToggleSubtask?.(task.id, subtask.id)}
                     className={cn(
-                      "flex h-4 w-4 items-center justify-center rounded border transition-colors",
+                      "flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors",
                       subtask.isCompleted ? "border-emerald-500 bg-emerald-500 text-white" : "border-[var(--border-strong)]"
                     )}
                   >
@@ -296,20 +309,20 @@ export function TaskDetailDrawer({
                   <button
                     type="button"
                     onClick={() => onDeleteSubtask?.(task.id, subtask.id)}
-                    className="opacity-0 group-hover:opacity-100 p-1 text-[var(--text-tertiary)] hover:text-rose-500 transition-all"
+                    className="opacity-0 group-hover:opacity-100 p-1 text-[var(--text-tertiary)] hover:text-rose-500 transition-all min-h-[32px] min-w-[32px] flex items-center justify-center"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
               ))}
 
-              <form onSubmit={handleCreateSubtask} className="flex items-center gap-2 rounded-lg px-2 py-1 mt-1 border border-dashed border-[var(--border-hairline)] focus-within:border-[var(--accent-primary)]">
-                <Plus className="h-3 w-3 text-[var(--text-tertiary)]" />
+              <form onSubmit={handleCreateSubtask} className="flex min-h-[40px] items-center gap-2 rounded-lg px-3 py-1 mt-1 border border-dashed border-[var(--border-hairline)] focus-within:border-[var(--accent-primary)]">
+                <Plus className="h-3.5 w-3.5 text-[var(--text-tertiary)]" />
                 <input
                   value={newSubtaskTitle}
                   onChange={(e) => setNewSubtaskTitle(e.target.value)}
                   placeholder="Tambah subtask lalu tekan Enter..."
-                  className="flex-1 bg-transparent text-xs outline-none py-1"
+                  className="flex-1 bg-transparent text-xs outline-none py-1.5"
                   disabled={isSubmittingSubtask}
                 />
               </form>
@@ -319,13 +332,13 @@ export function TaskDetailDrawer({
           {/* Tag Section */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Tag</span>
+              <span className="font-sans text-xs font-medium text-[var(--text-secondary)]">Tag</span>
               <button
                 type="button"
                 onClick={() => setIsAddingTag(!isAddingTag)}
-                className={cn("flex items-center gap-1 text-[10px] font-semibold text-[var(--accent-primary)] transition-all", isAddingTag && "rotate-45 text-rose-500")}
+                className={cn("flex items-center gap-1 text-xs font-medium text-[var(--accent-primary)] transition-all min-h-[36px] px-2", isAddingTag && "text-rose-500")}
               >
-                <Plus className="h-3 w-3" />
+                <Plus className={cn("h-3.5 w-3.5 transition-transform", isAddingTag && "rotate-45")} />
                 {isAddingTag ? "Batal" : "Tag Baru"}
               </button>
             </div>
@@ -337,7 +350,7 @@ export function TaskDetailDrawer({
                   value={newTagName}
                   onChange={(e) => setNewTagName(e.target.value)}
                   placeholder="Nama tag..."
-                  className="w-full bg-transparent text-xs font-semibold outline-none"
+                  className="w-full bg-transparent text-xs font-medium outline-none"
                   disabled={isSubmittingTag}
                 />
                 <div className="flex flex-wrap gap-2">
@@ -347,7 +360,7 @@ export function TaskDetailDrawer({
                       type="button"
                       onClick={() => setNewTagColor(color)}
                       className={cn(
-                        "h-5 w-5 rounded-full border-2 transition-all",
+                        "h-6 w-6 rounded-full border-2 transition-all min-h-[24px] min-w-[24px]",
                         newTagColor === color ? "border-white ring-2 ring-[var(--accent-primary)]" : "border-transparent"
                       )}
                       style={{ backgroundColor: color }}
@@ -357,7 +370,7 @@ export function TaskDetailDrawer({
                 <button
                   type="submit"
                   disabled={!newTagName.trim() || isSubmittingTag}
-                  className="w-full rounded-lg bg-[var(--accent-primary)] py-1.5 text-xs font-bold text-white hover:bg-[var(--accent-hover)] disabled:opacity-50"
+                  className="w-full rounded-lg bg-[var(--accent-primary)] min-h-[44px] text-xs font-medium text-white hover:bg-[var(--accent-hover)] disabled:opacity-50"
                 >
                   {isSubmittingTag ? "Menyimpan..." : "Simpan Tag"}
                 </button>
@@ -373,7 +386,7 @@ export function TaskDetailDrawer({
                     type="button"
                     onClick={() => onToggleTag?.(task.id, tag.id)}
                     className={cn(
-                      "min-h-[36px] rounded-xl border px-3 text-[10px] font-mono transition-all",
+                      "min-h-[40px] rounded-xl border px-3 text-xs font-medium transition-all flex items-center",
                       isActive
                         ? "border-[var(--accent-primary)] bg-[var(--accent-soft)] text-[var(--accent-primary)]"
                         : "border-[var(--border-hairline)] text-[var(--text-tertiary)] hover:border-[var(--border-strong)]"
@@ -383,7 +396,7 @@ export function TaskDetailDrawer({
                   </button>
                 );
               })}
-              {tags.length === 0 && !isAddingTag && <span className="text-[10px] italic text-[var(--text-tertiary)]">Belum ada tag</span>}
+              {tags.length === 0 && !isAddingTag && <span className="text-xs italic text-[var(--text-tertiary)]">Belum ada tag</span>}
             </div>
           </div>
         </div>

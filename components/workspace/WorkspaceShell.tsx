@@ -52,6 +52,7 @@ interface WorkspaceShellProps {
 export function WorkspaceShell({ user, lists, tasks, tags, serverNow }: WorkspaceShellProps) {
   const toast = useToast();
 
+  const [userState, setUserState] = useState<SerializedUser>(user);
   const [listsState, setListsState] = useState<SerializedTaskList[]>(lists);
   const [tasksState, setTasksState] = useState<SerializedTaskWithRelations[]>(tasks);
   const [tagsState, setTagsState] = useState<SerializedTag[]>(tags);
@@ -59,6 +60,7 @@ export function WorkspaceShell({ user, lists, tasks, tags, serverNow }: Workspac
   const [activeScope, setActiveScope] = useState<WorkspaceScope>("all");
   const [activeView, setActiveView] = useState<WorkspaceView>("list");
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // State Filter & Sorting
@@ -172,6 +174,12 @@ export function WorkspaceShell({ user, lists, tasks, tags, serverNow }: Workspac
     setSortOption("manual");
   };
 
+  const isFiltered =
+    searchQuery.trim().length > 0 ||
+    priorityFilter !== "ALL" ||
+    selectedTagId !== null ||
+    sortOption !== "manual";
+
   // Fokus cepat ke input SmartQuickAdd
   const handleFocusQuickAdd = () => {
     const el = document.getElementById("smart-quick-add-input") as HTMLInputElement | null;
@@ -185,6 +193,13 @@ export function WorkspaceShell({ user, lists, tasks, tags, serverNow }: Workspac
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setIsCommandPaletteOpen((prev) => !prev);
+        return;
+      }
+
+      // Cmd+B atau Ctrl+B: Toggle Sembunyikan / Tampilkan Sidebar
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        setIsSidebarOpen((prev) => !prev);
         return;
       }
 
@@ -673,17 +688,23 @@ export function WorkspaceShell({ user, lists, tasks, tags, serverNow }: Workspac
         taskCount={filteredAndSortedTasks.length}
         activeView={activeView}
         onSelectView={handleSelectView}
+        isSidebarOpen={isSidebarOpen}
+        onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
         onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+        user={userState}
+        onUserUpdated={(updated) => setUserState(updated)}
       />
 
       <div className="flex flex-1 overflow-hidden">
         <Sidebar
-          user={user}
+          user={userState}
           lists={listsState}
           taskCountsByScope={taskCountsByScope}
           activeScope={activeScope}
           onSelectScope={handleSelectScope}
+          isSidebarOpen={isSidebarOpen}
+          onToggleDesktopSidebar={() => setIsSidebarOpen(false)}
           isOpenMobile={isMobileSidebarOpen}
           onCloseMobile={() => setIsMobileSidebarOpen(false)}
           onListCreated={(list) => setListsState((prev) => [list, ...prev])}
@@ -718,6 +739,9 @@ export function WorkspaceShell({ user, lists, tasks, tags, serverNow }: Workspac
               tasks={filteredAndSortedTasks}
               serverNow={serverNow}
               sortOption={sortOption}
+              isFiltered={isFiltered}
+              onResetFilters={handleResetFilters}
+              onFocusQuickAdd={handleFocusQuickAdd}
               onSelectTask={(id) => setSelectedTaskId(id)}
               onToggleComplete={handleToggleTaskComplete}
               onDeleteTask={handleDeleteTask}
